@@ -1,24 +1,53 @@
 package controllers
 
+import java.time.LocalDate
+import java.util.UUID
 import javax.inject._
 
+import controllers.CarAdvertController.CreateCarAdvertData
+import models.{CarAdvert, CarAdvertRepository, FuelType}
+import play.api.libs.json._
 import play.api.mvc._
 
-/**
- * This controller creates an `Action` to handle HTTP requests to the
- * application's home page.
- */
-@Singleton
-class CarAdvertController @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
+import scala.concurrent.ExecutionContext
 
-  /**
-   * Create an Action to render an HTML page.
-   *
-   * The configuration in the `routes` file means that this method
-   * will be called when the application receives a `GET` request with
-   * a path of `/`.
-   */
-  def index() = Action { implicit request: Request[AnyContent] =>
-    Ok(views.html.index())
+
+object CarAdvertController {
+  object CreateCarAdvertData {
+    implicit val createCarAdvertRequestWrites: Writes[CreateCarAdvertData] = Json.writes[CreateCarAdvertData]
+    implicit val createCarAdvertRequestReads: Reads[CreateCarAdvertData] = Json.reads[CreateCarAdvertData]
+  }
+
+  case class CreateCarAdvertData(title: String,
+                                 fuel: FuelType,
+                                 price: Int,
+                                 `new`: Boolean,
+                                 mileage: Option[Int] = Option.empty,
+                                 firstRegistration: Option[LocalDate] = Option.empty)
+
+}
+
+@Singleton
+class CarAdvertController @Inject()(cc: ControllerComponents, repo: CarAdvertRepository)
+                                   (implicit ec: ExecutionContext)
+  extends AbstractController(cc) {
+
+  def validateJson[A : Reads]: BodyParser[A] = parse.json.validate(
+    _.validate[A].asEither.left.map(e => BadRequest(JsError.toJson(e)))
+  )
+
+  def index: Action[CreateCarAdvertData] = Action(validateJson[CreateCarAdvertData]).async { request =>
+    val data = request.body
+    val carAdvert = CarAdvert(
+      id = UUID.randomUUID(),
+      title = data.title,
+      fuel = data.fuel,
+      price = data.price,
+      `new` = data.`new`,
+      mileage = data.mileage,
+      firstRegistration = data.firstRegistration)
+    repo
+      .create(carAdvert)
+      .map(_ => Created(Json.toJson(carAdvert)))
   }
 }

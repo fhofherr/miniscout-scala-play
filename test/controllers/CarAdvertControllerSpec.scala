@@ -1,45 +1,33 @@
 package controllers
 
+import akka.stream.Materializer
+import models.{CarAdvert, Gasoline}
 import org.scalatestplus.play._
-import org.scalatestplus.play.guice._
+import org.scalatestplus.play.guice.GuiceOneAppPerTest
+import play.api.libs.json.Json
 import play.api.test.Helpers._
 import play.api.test._
 
-/**
- * Add your spec here.
- * You can mock out a whole application including requests, plugins etc.
- *
- * For more information, see https://www.playframework.com/documentation/latest/ScalaTestingWithScalaTest
- */
+
 class CarAdvertControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecting {
+  implicit lazy val materializer: Materializer = app.materializer
 
-  "CarAdvertController GET" should {
-
-    "render the index page from a new instance of controller" in {
-      val controller = new CarAdvertController(stubControllerComponents())
-      val home = controller.index().apply(FakeRequest(GET, "/"))
-
-      status(home) mustBe OK
-      contentType(home) mustBe Some("text/html")
-      contentAsString(home) must include ("Welcome to Play")
-    }
-
-    "render the index page from the application" in {
+  "CarAdvertController POST" should {
+    "create a new car advert" in {
+      val carAdvertRequest = CarAdvertController.CreateCarAdvertData(
+        title = "Porsche 918",
+        fuel = Gasoline,
+        price = 847000,
+        `new` = true)
       val controller = inject[CarAdvertController]
-      val home = controller.index().apply(FakeRequest(GET, "/"))
+      val request = FakeRequest(POST, "/")
+        .withBody(carAdvertRequest)
+        .withHeaders(CONTENT_TYPE -> JSON)
+      val response = controller.index().apply(request)
 
-      status(home) mustBe OK
-      contentType(home) mustBe Some("text/html")
-      contentAsString(home) must include ("Welcome to Play")
-    }
-
-    "render the index page from the router" in {
-      val request = FakeRequest(GET, "/")
-      val home = route(app, request).get
-
-      status(home) mustBe OK
-      contentType(home) mustBe Some("text/html")
-      contentAsString(home) must include ("Welcome to Play")
+      status(response) mustBe CREATED
+      contentType(response) mustBe Option(JSON)
+      Json.fromJson[CarAdvert](contentAsJson(response)).isSuccess mustBe true
     }
   }
 }
