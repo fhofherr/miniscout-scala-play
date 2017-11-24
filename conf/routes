@@ -4,4 +4,4 @@
 # ~~~~
 
 # An example controller showing a sample home page
-POST     /                           controllers.CarAdvertController.index
+POST     /                           controllers.CarAdvertController.createNew

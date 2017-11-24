@@ -36,7 +36,7 @@ class CarAdvertController @Inject()(cc: ControllerComponents, repo: CarAdvertRep
     _.validate[A].asEither.left.map(e => BadRequest(JsError.toJson(e)))
   )
 
-  def index: Action[CreateCarAdvertData] = Action(validateJson[CreateCarAdvertData]).async { request =>
+  def createNew: Action[CreateCarAdvertData] = Action(validateJson[CreateCarAdvertData]).async { request =>
     val data = request.body
     val carAdvert = CarAdvert(
       id = UUID.randomUUID(),
@@ -49,5 +49,11 @@ class CarAdvertController @Inject()(cc: ControllerComponents, repo: CarAdvertRep
     repo
       .create(carAdvert)
       .map(_ => Created(Json.toJson(carAdvert)))
+  }
+
+  def findById(id: UUID): Action[AnyContent] = Action.async { request =>
+    repo
+      .findById(id)
+      .map(carAdvert => Ok(Json.toJson(carAdvert)))
   }
 }
