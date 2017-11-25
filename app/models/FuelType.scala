@@ -17,6 +17,8 @@ object FuelType {
     }
   }
 
+  implicit val ordering: Ordering[FuelType] = Ordering.by(unapply)
+
   def apply(s: String): FuelType = s match {
     case "Gasoline" => Gasoline
     case "Diesel" => Diesel
