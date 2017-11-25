@@ -1,32 +1,14 @@
 package controllers
 
-import java.time.LocalDate
 import java.util.UUID
 import javax.inject._
 
-import controllers.CarAdvertController.CreateCarAdvertData
-import models.{CarAdvert, CarAdvertRepository, FuelType}
+import models.{CarAdvert, CarAdvertRepository}
 import play.api.libs.json._
 import play.api.mvc._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-
-object CarAdvertController {
-
-  object CreateCarAdvertData {
-    implicit val createCarAdvertRequestWrites: Writes[CreateCarAdvertData] = Json.writes[CreateCarAdvertData]
-    implicit val createCarAdvertRequestReads: Reads[CreateCarAdvertData] = Json.reads[CreateCarAdvertData]
-  }
-
-  case class CreateCarAdvertData(title: String,
-                                 fuel: FuelType,
-                                 price: Int,
-                                 `new`: Boolean,
-                                 mileage: Option[Int] = Option.empty,
-                                 firstRegistration: Option[LocalDate] = Option.empty)
-
-}
 
 @Singleton
 class CarAdvertController @Inject()(cc: ControllerComponents, repo: CarAdvertRepository)

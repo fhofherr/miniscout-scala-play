@@ -3,11 +3,10 @@ package controllers
 
 import java.util.UUID
 
-import controllers.CarAdvertController.CreateCarAdvertData
 import models.{CarAdvert, Gasoline}
 import org.scalatestplus.play._
 import org.scalatestplus.play.guice.GuiceOneAppPerTest
-import play.api.libs.json.Json
+import play.api.libs.json.{JsObject, JsString, Json}
 import play.api.mvc.Result
 import play.api.test.Helpers._
 import play.api.test._
@@ -24,6 +23,32 @@ class CarAdvertControllerSpec extends PlaySpec with GuiceOneAppPerTest with Inje
       status(response) mustBe CREATED
       contentType(response) mustBe Option(JSON)
       contentAsJson(response).validate[CarAdvert].asOpt mustBe defined
+    }
+
+    "return BadRequest for something that is not NewCarAdvertData" in withEvolutions {
+      val request = FakeRequest(POST, "/")
+        .withJsonBody(JsObject(Seq("invalid" -> JsString("something"))))
+      val Some(response) = route(app, request)
+
+      status(response) mustBe BAD_REQUEST
+    }
+
+    "returns BadRequest for invalid new cars" in withEvolutions {
+      val newWithMileage = carAdvertDataPorsche
+        .copy(`new` = true, mileage = Option(134), firstRegistration = Option.empty)
+      val request = FakeRequest(POST, "/")
+        .withJsonBody(Json.toJson(newWithMileage))
+      val Some(response) = route(app, request)
+      status(response) mustBe BAD_REQUEST
+    }
+
+    "returns BadRequest for invalid used cars" in withEvolutions {
+      val newWithMileage = carAdvertDataPorsche
+        .copy(`new` = false, mileage = Option.empty, firstRegistration = Option.empty)
+      val request = FakeRequest(POST, "/")
+        .withJsonBody(Json.toJson(newWithMileage))
+      val Some(response) = route(app, request)
+      status(response) mustBe BAD_REQUEST
     }
   }
 
