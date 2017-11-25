@@ -3,7 +3,6 @@ package controllers
 
 import java.util.UUID
 
-import akka.stream.Materializer
 import controllers.CarAdvertController.CreateCarAdvertData
 import models.{CarAdvert, Gasoline}
 import org.scalatestplus.play._
@@ -18,8 +17,6 @@ import scala.concurrent.Future
 
 
 class CarAdvertControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecting with DbEvolutions {
-  implicit lazy val materializer: Materializer = app.materializer
-
   "CarAdvertController POST /" should {
     "create a new car advert" in withEvolutions {
       val response = postCarAdvert(carAdvertDataPorsche)
