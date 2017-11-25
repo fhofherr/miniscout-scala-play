@@ -104,6 +104,10 @@ class CarAdvertRepository @Inject()(dbConfigProvider: DatabaseConfigProvider)(im
     carAdverts += c
   }
 
+  def delete(id: UUID): Future[Int] = db.run {
+    carAdverts.filter(_.id === id).delete
+  }
+
   def findById(id: UUID): Future[Option[CarAdvert]] = db.run {
     carAdverts.filter(_.id === id).result.map(_.headOption)
   }

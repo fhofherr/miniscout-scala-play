@@ -50,8 +50,28 @@ class CarAdvertRepositorySpec extends PlaySpec with GuiceOneAppPerTest with Inje
 
     "sort ascending and descending by first registration date" in withEvolutions {
       import CarAdvert._
-
       mustSortAscendingAndDescendingBy(_.firstRegistration, FirstRegistrationAsc, FirstRegistrationDesc)
+    }
+  }
+
+  "CarAdvertRepository#delete" must {
+
+    "delete an existing car advert" in withEvolutions {
+      val carAdvertRepository = inject[CarAdvertRepository]
+      await(carAdvertRepository.create(carAdvert))
+
+      val nDeleted = await(carAdvertRepository.delete(carAdvert.id))
+      nDeleted must equal(1)
+
+      val retrievedCarAdvert = await(carAdvertRepository.findById(carAdvert.id))
+      retrievedCarAdvert mustBe None
+    }
+
+    "return 0 if no car advert was deleted" in withEvolutions {
+      val carAdvertRepository = inject[CarAdvertRepository]
+      val id = UUID.randomUUID()
+      val nDeleted = await(carAdvertRepository.delete(id))
+      nDeleted must equal(0)
     }
   }
 
