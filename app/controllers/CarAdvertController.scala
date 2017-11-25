@@ -36,6 +36,13 @@ class CarAdvertController @Inject()(cc: ControllerComponents, repo: CarAdvertRep
     _.validate[A].asEither.left.map(e => BadRequest(JsError.toJson(e)))
   )
 
+  def index(sortBy: Option[String] = Option.empty): Action[AnyContent] = Action.async { request =>
+    val sortByType = sortBy
+      .map(s => CarAdvertRepository.SortBy(s))
+      .getOrElse(CarAdvertRepository.IdAsc)
+    repo.findAll(sortByType).map(as => Ok(Json.toJson(as)))
+  }
+
   def createNew: Action[CreateCarAdvertData] = Action(validateJson[CreateCarAdvertData]).async { request =>
     val data = request.body
     val carAdvert = CarAdvert(

@@ -4,4 +4,5 @@
 # ~~~~
 
 # An example controller showing a sample home page
+GET      /                           controllers.CarAdvertController.index(sortBy: Option[String])
 POST     /                           controllers.CarAdvertController.createNew
