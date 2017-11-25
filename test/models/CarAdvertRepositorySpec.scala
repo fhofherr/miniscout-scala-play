@@ -75,6 +75,38 @@ class CarAdvertRepositorySpec extends PlaySpec with GuiceOneAppPerTest with Inje
     }
   }
 
+  "CarAdvertRepository#update" must {
+
+    "update an existing car advert" in withEvolutions {
+      val carAdvertRepository = inject[CarAdvertRepository]
+      await(carAdvertRepository.create(carAdvert))
+
+      val updatedCarAdvert = carAdvert.copy(
+        title = "Updated title",
+        fuel = Gasoline,
+        price = 238947,
+        `new` = false,
+        mileage = Option(34985),
+        firstRegistration = Option(LocalDate.of(2015, 1, 23)))
+
+      val nUpdated = await(carAdvertRepository.update(updatedCarAdvert))
+
+      nUpdated must equal(1)
+
+      val Some(storedCarAdvert) =
+        await(carAdvertRepository.findById(carAdvert.id))
+
+      storedCarAdvert must equal(updatedCarAdvert)
+      storedCarAdvert must not equal carAdvert
+    }
+
+    "return 0 if no car advert was updated" in withEvolutions {
+      val carAdvertRepository = inject[CarAdvertRepository]
+      val nUpdated = await(carAdvertRepository.update(carAdvert))
+      nUpdated must equal(0)
+    }
+  }
+
   val duration = Duration(100, TimeUnit.MILLISECONDS)
 
   def await[T](future: Future[T]): T = Await.result(future, duration)

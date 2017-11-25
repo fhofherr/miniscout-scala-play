@@ -104,6 +104,11 @@ class CarAdvertRepository @Inject()(dbConfigProvider: DatabaseConfigProvider)(im
     carAdverts += c
   }
 
+  def update(u: CarAdvert): Future[Int] = db.run {
+    val q = for(c <- carAdverts if c.id === u.id) yield c
+    q.update(u)
+  }
+
   def delete(id: UUID): Future[Int] = db.run {
     carAdverts.filter(_.id === id).delete
   }
