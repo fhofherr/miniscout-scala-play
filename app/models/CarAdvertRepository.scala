@@ -12,6 +12,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class CarAdvertRepository @Inject()(dbConfigProvider: DatabaseConfigProvider)(implicit ec: ExecutionContext) {
+
   private val dbConfig = dbConfigProvider.get[JdbcProfile]
 
   import dbConfig._
@@ -54,5 +55,9 @@ class CarAdvertRepository @Inject()(dbConfigProvider: DatabaseConfigProvider)(im
 
   def findById(id: UUID): Future[Option[CarAdvert]] = db.run {
     carAdverts.filter(_.id === id).result.map(_.headOption)
+  }
+
+  def findAll(): Future[Seq[CarAdvert]] = db.run {
+    carAdverts.sortBy(_.id.asc).result
   }
 }
