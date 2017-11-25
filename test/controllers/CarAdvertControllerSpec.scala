@@ -105,6 +105,33 @@ class CarAdvertControllerSpec extends PlaySpec with GuiceOneAppPerTest with Inje
     }
   }
 
+  "CarAdvertController PUT /<uuid>" should {
+    "update an existing car advert" in withEvolutions {
+      val carAdvert = saveNewCarAdvert(carAdvertDataPorsche)
+
+      val request = FakeRequest(PUT, s"/${carAdvert.id}")
+        .withJsonBody(Json.toJson(carAdvertDataBMW))
+
+      val Some(response) = route(app, request)
+      status(response) mustBe OK
+      contentType(response) mustBe Option(JSON)
+
+      val expectedCarAdvert = carAdvert.copy(
+        title = carAdvertDataBMW.title,
+        fuel = carAdvertDataBMW.fuel,
+        price = carAdvertDataBMW.price,
+        `new` = carAdvertDataBMW.`new`,
+        mileage = carAdvertDataBMW.mileage,
+        firstRegistration = carAdvertDataBMW.firstRegistration)
+
+      val Some(actualCarAdvert) = contentAsJson(response)
+        .validate[CarAdvert]
+        .asOpt
+
+      actualCarAdvert must equal(expectedCarAdvert)
+    }
+  }
+
   val carAdvertDataPorsche = CreateCarAdvertData(
     title = "Porsche 918",
     fuel = Gasoline,
