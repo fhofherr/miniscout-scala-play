@@ -6,6 +6,7 @@ import controllers.CarAdvertController.CreateCarAdvertData
 import models.{CarAdvert, Gasoline}
 import org.scalatestplus.play._
 import org.scalatestplus.play.guice.GuiceOneAppPerTest
+import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.api.test.Helpers._
 import play.api.test._
@@ -19,8 +20,7 @@ class CarAdvertControllerSpec extends PlaySpec with GuiceOneAppPerTest with Inje
 
   "CarAdvertController POST /" should {
     "create a new car advert" in withEvolutions {
-      val controller = inject[CarAdvertController]
-      val response = postCarAdvert(controller, carAdvertData)
+      val response = postCarAdvert(carAdvertDataPorsche)
 
       status(response) mustBe CREATED
       contentType(response) mustBe Option(JSON)
@@ -29,14 +29,14 @@ class CarAdvertControllerSpec extends PlaySpec with GuiceOneAppPerTest with Inje
   }
 
   "CarAdvertController GET /" should {
-    "get a list of all available car adverts" in withEvolutions {
-      val controller = inject[CarAdvertController]
-      val carAdvertPorsche = saveNewCarAdvert(controller, carAdvertData)
-      val carAdvertBMW = saveNewCarAdvert(
-        controller, carAdvertData.copy(title = "BMW X3", price = 40324))
 
-      val listCarAdvertsRequest = FakeRequest("GET", "/?sortBy=idAsc")
-      val response = controller.index(Option("idAsc")).apply(listCarAdvertsRequest)
+    "get a list of all available car adverts sorted by id" in withEvolutions {
+      val carAdvertPorsche = saveNewCarAdvert(carAdvertDataPorsche)
+      val carAdvertBMW = saveNewCarAdvert(
+        carAdvertDataBMW)
+
+      val listCarAdvertsRequest = FakeRequest(GET, "/")
+      val Some(response) = route(app, listCarAdvertsRequest)
 
       status(response) mustBe OK
       contentType(response) mustBe Option(JSON)
@@ -50,41 +50,62 @@ class CarAdvertControllerSpec extends PlaySpec with GuiceOneAppPerTest with Inje
       retrievedAdverts must have size expected.length
       retrievedAdverts must contain theSameElementsInOrderAs expected
     }
+
+    "allow to specify a different ordering as query parameter" in withEvolutions {
+      val carAdvertPorsche = saveNewCarAdvert(carAdvertDataPorsche)
+      val carAdvertBMW = saveNewCarAdvert(carAdvertDataBMW)
+      val request = FakeRequest(GET, "/?sortBy=titleAsc")
+      val Some(response) = route(app, request)
+
+      status(response) mustBe OK
+      contentType(response) mustBe Option(JSON)
+
+      val Some(retrievedAdverts) = contentAsJson(response)
+        .validate[Seq[CarAdvert]]
+        .asOpt
+
+      val expected = Seq(carAdvertPorsche, carAdvertBMW).sortBy(_.title)
+      retrievedAdverts must have size expected.length
+      retrievedAdverts must contain theSameElementsInOrderAs expected
+    }
+
   }
 
   "CarAdvertController GET /<uuid>" should {
     "obtain an existing car advert using its id" in withEvolutions {
-      val controller = inject[CarAdvertController]
-      val carAdvert = saveNewCarAdvert(controller, carAdvertData)
+      val carAdvert = saveNewCarAdvert(carAdvertDataPorsche)
 
-      val getCarAdvertRequest = FakeRequest("GET", s"/${carAdvert.id}")
-      val findResponse = controller.findById(carAdvert.id).apply(getCarAdvertRequest)
+      val request = FakeRequest("GET", s"/${carAdvert.id}")
+      val Some(response) = route(app, request)
 
-      val retrievedAdvert = contentAsJson(findResponse)
+      val Some(retrievedAdvert) = contentAsJson(response)
         .validate[CarAdvert]
         .asOpt
-        .getOrElse(fail("Car advert not retrieved"))
 
       retrievedAdvert mustEqual carAdvert
     }
   }
 
-  val carAdvertData = CreateCarAdvertData(
+  val carAdvertDataPorsche = CreateCarAdvertData(
     title = "Porsche 918",
     fuel = Gasoline,
     price = 847000,
     `new` = true)
 
-  def postCarAdvert(controller: CarAdvertController, data: CreateCarAdvertData): Future[Result] = {
+  val carAdvertDataBMW = carAdvertDataPorsche
+    .copy(title = "BMW X3", price = 40324)
+
+  def postCarAdvert(data: CreateCarAdvertData): Future[Result] = {
     val createCarAdvertRequest = FakeRequest(POST, "/")
-      .withBody(carAdvertData)
+      .withJsonBody(Json.toJson(carAdvertDataPorsche))
       .withHeaders(CONTENT_TYPE -> JSON)
 
-    controller.createNew().apply(createCarAdvertRequest)
+    route(app, createCarAdvertRequest)
+      .getOrElse(fail("Could not post to /"))
   }
 
-  def saveNewCarAdvert(controller: CarAdvertController, data: CreateCarAdvertData): CarAdvert = {
-    val response = postCarAdvert(controller, data)
+  def saveNewCarAdvert(data: CreateCarAdvertData): CarAdvert = {
+    val response = postCarAdvert(data)
     contentAsJson(response)
       .validate[CarAdvert]
       .asOpt

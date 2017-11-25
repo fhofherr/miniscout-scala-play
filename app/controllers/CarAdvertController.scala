@@ -58,9 +58,10 @@ class CarAdvertController @Inject()(cc: ControllerComponents, repo: CarAdvertRep
       .map(_ => Created(Json.toJson(carAdvert)))
   }
 
-  def findById(id: UUID): Action[AnyContent] = Action.async { request =>
+  def findById(id: String): Action[AnyContent] = Action.async { request =>
+    val uuid = UUID.fromString(id)
     repo
-      .findById(id)
+      .findById(uuid)
       .map(carAdvert => Ok(Json.toJson(carAdvert)))
   }
 }
