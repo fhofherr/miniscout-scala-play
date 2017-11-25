@@ -63,7 +63,7 @@ class CarAdvertController @Inject()(cc: ControllerComponents, repo: CarAdvertRep
     val uuid = UUID.fromString(id)
     repo
       .findById(uuid)
-      .map(carAdvert => Ok(Json.toJson(carAdvert)))
+      .map(_.map(ca => Ok(Json.toJson(ca))).getOrElse(NotFound))
   }
 
   def update(id: String): Action[CreateCarAdvertData] = Action(validateJson[CreateCarAdvertData]).async { request =>

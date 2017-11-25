@@ -68,6 +68,20 @@ class CarAdvertControllerSpec extends PlaySpec with GuiceOneAppPerTest with Inje
       retrievedAdverts must contain theSameElementsInOrderAs expected
     }
 
+    "return an empty list if there are no car adverts" in withEvolutions {
+      val request = FakeRequest(GET, "/")
+      val Some(response) = route(app, request)
+
+      status(response) mustBe OK
+      contentType(response) mustBe Option(JSON)
+
+      val Some(retreivedCarAdverts) = contentAsJson(response)
+        .validate[Seq[CarAdvert]]
+        .asOpt
+
+      retreivedCarAdverts mustBe empty
+    }
+
   }
 
   "CarAdvertController GET /<uuid>" should {
@@ -77,11 +91,20 @@ class CarAdvertControllerSpec extends PlaySpec with GuiceOneAppPerTest with Inje
       val request = FakeRequest("GET", s"/${carAdvert.id}")
       val Some(response) = route(app, request)
 
+      status(response) mustBe OK
+      contentType(response) mustBe Option(JSON)
+
       val Some(retrievedAdvert) = contentAsJson(response)
         .validate[CarAdvert]
         .asOpt
 
       retrievedAdvert mustEqual carAdvert
+    }
+
+    "answer with NotFound if the advert does not exist" in withEvolutions {
+      val request = FakeRequest(GET, s"/${UUID.randomUUID()}")
+      val Some(response) = route(app, request)
+      status(response) mustBe NOT_FOUND
     }
   }
 
@@ -126,6 +149,14 @@ class CarAdvertControllerSpec extends PlaySpec with GuiceOneAppPerTest with Inje
         .asOpt
 
       actualCarAdvert must equal(expectedCarAdvert)
+    }
+
+    "answer with NotFound if the car advert does not exist" in withEvolutions {
+      val request = FakeRequest(PUT, s"/${UUID.randomUUID()}")
+        .withJsonBody(Json.toJson(carAdvertDataPorsche))
+      val Some(response) = route(app, request)
+
+      status(response) mustBe NOT_FOUND
     }
   }
 
