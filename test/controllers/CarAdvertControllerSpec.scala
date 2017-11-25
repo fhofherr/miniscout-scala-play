@@ -1,6 +1,8 @@
 package controllers
 
 
+import java.util.UUID
+
 import akka.stream.Materializer
 import controllers.CarAdvertController.CreateCarAdvertData
 import models.{CarAdvert, Gasoline}
@@ -83,6 +85,23 @@ class CarAdvertControllerSpec extends PlaySpec with GuiceOneAppPerTest with Inje
         .asOpt
 
       retrievedAdvert mustEqual carAdvert
+    }
+  }
+
+  "CarAdvertController DELETE /<uuid>" should {
+    "delete the car advert identified by the id" in withEvolutions {
+      val carAdvert = saveNewCarAdvert(carAdvertDataPorsche)
+      val request = FakeRequest(DELETE, s"/${carAdvert.id}")
+      val Some(response) = route(app, request)
+
+      status(response) mustBe OK
+    }
+
+    "answer with NotFound if a car advert does not exist" in withEvolutions {
+      val request = FakeRequest(DELETE, s"/${UUID.randomUUID()}")
+      val Some(response) = route(app, request)
+
+      status(response) mustBe NOT_FOUND
     }
   }
 

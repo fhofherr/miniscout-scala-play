@@ -4,6 +4,8 @@
 # ~~~~
 
 GET      /$id<[-0-9a-fA-F]{36}>      controllers.CarAdvertController.findById(id: String)
+DELETE   /$id<[-0-9a-fA-F]{36}>      controllers.CarAdvertController.delete(id: String)
+
 GET      /                           controllers.CarAdvertController.index(sortBy: Option[String])
 POST     /                           controllers.CarAdvertController.createNew
 

@@ -58,10 +58,17 @@ class CarAdvertController @Inject()(cc: ControllerComponents, repo: CarAdvertRep
       .map(_ => Created(Json.toJson(carAdvert)))
   }
 
-  def findById(id: String): Action[AnyContent] = Action.async { request =>
+  def findById(id: String): Action[AnyContent] = Action.async { _ =>
     val uuid = UUID.fromString(id)
     repo
       .findById(uuid)
       .map(carAdvert => Ok(Json.toJson(carAdvert)))
+  }
+
+  def delete(id: String): Action[AnyContent] = Action.async { _ =>
+    val uuid = UUID.fromString(id)
+    repo
+      .delete(uuid)
+      .map(nDeleted => if (nDeleted > 0) { Ok } else { NotFound })
   }
 }
